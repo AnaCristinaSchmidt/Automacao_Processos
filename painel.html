@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contas a Pagar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra superior → faixa com área de envio + totais → tabela de parcelas com abas e busca, atividade ao lado. Mesmo visual escuro do painel comercial. */
+:root {
+  color-scheme: dark;
+  --ink: #060b18;
+  --panel: rgba(17, 29, 61, .62);
+  --panel-solid: #0f1a36;
+  --line: rgba(140, 170, 255, .13);
+  --line-2: rgba(140, 170, 255, .26);
+  --fg: #e9eefb;
+  --muted: #8c9cc3;
+  --faint: #5a6990;
+  --accent: #4f9dff;
+  --accent-2: #74e6ff;
+  --ok: #50dca4;
+  --warn: #ffc65c;
+  --bad: #ff6b81;
+  --grey: #9aa6c4;
+  --glow-1: rgba(64, 132, 255, .30);
+  --glow-2: rgba(110, 90, 255, .20);
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+  --r: 14px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--ink);
+  background-image: radial-gradient(900px 520px at 6% -10%, var(--glow-1), transparent 70%), radial-gradient(800px 600px at 108% 0%, var(--glow-2), transparent 70%);
+  background-attachment: fixed;
+  color: var(--fg); font: 14px/1.5 var(--font-body); -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin-inline: auto; padding-inline: max(16px, 2.5vw); }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+/* barra */
+.bar { position: sticky; top: 0; z-index: 5; background: rgba(6, 11, 24, .8); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.logo { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent-2), var(--accent)); box-shadow: 0 0 24px var(--glow-1); }
+.logo svg { width: 22px; height: 22px; }
+.brand h1 { margin: 0; font: 600 17px var(--font-display); letter-spacing: -.01em; }
+.brand p { margin: 0; font-size: 12px; color: var(--muted); }
+.live { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(80, 220, 164, .6); animation: pulse 2s infinite; }
+.live.off i { background: var(--bad); animation: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(80, 220, 164, 0); } 100% { box-shadow: 0 0 0 0 rgba(80, 220, 164, 0); } }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line-2); background: transparent; cursor: pointer; font-weight: 600; font-size: 13px; transition: background .15s, border-color .15s; }
+.btn:hover { background: rgba(140, 170, 255, .08); border-color: var(--accent); }
+.btn.primary { background: var(--fg); color: var(--ink); border-color: var(--fg); }
+.btn.primary:hover { background: #fff; }
+.btn svg { width: 16px; height: 16px; }
+
+main { display: flex; flex-direction: column; gap: 18px; padding-block: 24px 40px; }
+
+/* faixa superior */
+.top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); gap: 14px; }
+.drop { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; min-height: 210px; padding: 24px; border-radius: var(--r); border: 1.5px dashed var(--line-2); background: var(--panel); cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.drop:hover { border-color: var(--accent); }
+.drop.over { border-color: var(--accent-2); background: rgba(116, 230, 255, .08); transform: scale(1.01); }
+.drop .ico { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; background: rgba(79, 157, 255, .14); color: var(--accent-2); }
+.drop .ico svg { width: 28px; height: 28px; }
+.drop h2 { margin: 0; font: 500 18px var(--font-display); letter-spacing: -.01em; }
+.drop p { margin: 0; color: var(--muted); font-size: 13px; max-width: 36ch; }
+.drop .bar-prog { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent-2); border-radius: 0 0 0 var(--r); width: 0; transition: width .3s; }
+.drop input { display: none; }
+
+.totals { display: grid; grid-template-columns: 1.3fr repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.tot { background: var(--panel-solid); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; cursor: pointer; transition: background .15s; text-align: left; border: 0; }
+.tot:hover { background: #13214a; }
+.tot.main { grid-row: span 2; justify-content: center; cursor: default; }
+.tot.main:hover { background: var(--panel-solid); }
+.tot .v { font: 500 clamp(20px, 2.2vw, 26px) var(--font-display); letter-spacing: -.02em; white-space: nowrap; }
+.tot.main .v { font-size: clamp(30px, 3.6vw, 44px); letter-spacing: -.03em; }
+.tot .s { font-size: 12.5px; color: var(--muted); }
+.tot .lab { display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* conteúdo */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 12px; }
+.card h3 { margin: 0; font: 500 16px var(--font-display); letter-spacing: -.01em; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; font-size: 12.5px; font-weight: 500; color: var(--muted); cursor: pointer; }
+.tab b { font-weight: 700; margin-left: 4px; color: var(--fg); }
+.tab[aria-pressed="true"] { background: var(--fg); color: var(--ink); border-color: var(--fg); }
+.tab[aria-pressed="true"] b { color: var(--ink); }
+.search { flex: 1 1 200px; max-width: 280px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line-2); background: rgba(6, 11, 24, .5); color: var(--fg); font: inherit; }
+.search::placeholder { color: var(--faint); }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+th { text-align: left; font: 500 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding: 8px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; cursor: pointer; user-select: none; }
+th.r, td.r { text-align: right; }
+th[aria-sort="ascending"]::after { content: " ▲"; } th[aria-sort="descending"]::after { content: " ▼"; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr.new td { animation: flash 2.4s ease-out; }
+@keyframes flash { from { background: rgba(116, 230, 255, .16); } to { background: transparent; } }
+.forn { font-weight: 600; }
+.sub { font-size: 11.5px; color: var(--faint); font-family: var(--font-mono); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.pill.Vencida { color: var(--bad); background: rgba(255, 107, 129, .14); }
+.pill.Vence { color: var(--warn); background: rgba(255, 198, 92, .13); }
+.pill.Avencer { color: var(--accent); background: rgba(79, 157, 255, .14); }
+.pill.Verificar { color: var(--grey); background: rgba(154, 166, 196, .14); }
+.pill.Paga { color: var(--ok); background: rgba(80, 220, 164, .13); }
+.pay { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; cursor: pointer; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.pay:hover { border-color: var(--ok); color: var(--ok); }
+.pay.done { border-color: transparent; color: var(--muted); font-weight: 500; }
+.pay.done:hover { color: var(--fg); border-color: var(--line-2); }
+.pay:disabled { opacity: .5; cursor: wait; }
+tr.paid td:not(:last-child) { opacity: .5; }
+
+.empty { text-align: center; padding: 40px 16px; color: var(--muted); }
+.empty h4 { margin: 0 0 6px; font: 500 16px var(--font-display); color: var(--fg); }
+.empty p { margin: 0 auto 14px; max-width: 46ch; }
+
+.feed { display: flex; flex-direction: column; max-height: 560px; overflow-y: auto; margin: 0 -6px; }
+.ev { display: grid; grid-template-columns: 8px 1fr; gap: 4px 10px; padding: 9px 6px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.ev .dot { margin-top: 6px; }
+.ev .h { grid-column: 2; font: 11px var(--font-mono); color: var(--faint); }
+.ev .t { grid-column: 2; word-break: break-word; }
+
+.banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--r); background: rgba(255, 198, 92, .1); border: 1px solid rgba(255, 198, 92, .35); color: var(--warn); font-weight: 600; }
+.foot { color: var(--faint); font-size: 12px; }
+.foot code { font-family: var(--font-mono); color: var(--muted); }
+
+.toasts { position: fixed; right: 18px; bottom: 18px; z-index: 20; display: flex; flex-direction: column; gap: 8px; max-width: min(420px, calc(100vw - 36px)); }
+.toast { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--panel-solid); border: 1px solid var(--line-2); box-shadow: 0 16px 40px rgba(0, 0, 0, .5); font-size: 13px; animation: in .25s ease-out; }
+.toast .dot { margin-top: 6px; }
+@keyframes in { from { transform: translateY(8px); opacity: 0; } }
+
+@media (max-width: 1000px) { .top, .grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tot.main { grid-column: span 2; grid-row: auto; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#060b18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
+      <div><h1>Contas a pagar</h1><p id="sub">Notas fiscais lançadas automaticamente</p></div>
+    </div>
+    <span class="live" id="live"><i></i><span id="live-t">Vigiando a pasta entrada</span></span>
+    <button class="btn" id="b-pasta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Abrir pasta</button>
+    <button class="btn" id="b-planilha" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>Abrir planilha</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="top">
+    <label class="drop" id="drop" for="file">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></div>
+      <h2 id="drop-t">Arraste o XML da nota aqui</h2>
+      <p id="drop-s">ou clique para escolher. Pode mandar várias de uma vez. Cada parcela vira uma linha na planilha.</p>
+      <input type="file" id="file" accept=".xml,text/xml,application/xml" multiple>
+      <span class="bar-prog" id="prog"></span>
+    </label>
+
+    <div class="totals" id="totals">
+      <div class="tot main"><span class="eyebrow">Em aberto</span><span class="v num" id="t-aberto">—</span><span class="s" id="t-aberto-s"></span></div>
+      <button class="tot" type="button" data-f="Vencida"><span class="lab"><span class="dot" style="background:var(--bad)"></span><span class="eyebrow">Vencidas</span></span><span class="v num" id="t-Vencida">—</span><span class="s" id="t-Vencida-s"></span></button>
+      <button class="tot" type="button" data-f="Vence em 7 dias"><span class="lab"><span class="dot" style="background:var(--warn)"></span><span class="eyebrow">Vence em 7 dias</span></span><span class="v num" id="t-Vence em 7 dias">—</span><span class="s" id="t-Vence em 7 dias-s"></span></button>
+      <button class="tot" type="button" data-f="A vencer"><span class="lab"><span class="dot" style="background:var(--accent)"></span><span class="eyebrow">A vencer</span></span><span class="v num" id="t-A vencer">—</span><span class="s" id="t-A vencer-s"></span></button>
+      <button class="tot" type="button" data-f="Paga"><span class="lab"><span class="dot" style="background:var(--ok)"></span><span class="eyebrow">Pagas</span></span><span class="v num" id="t-Paga">—</span><span class="s" id="t-Paga-s"></span></button>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-head">
+        <h3>Parcelas</h3>
+        <input class="search" id="q" type="search" placeholder="Buscar fornecedor, CNPJ ou nº da nota" aria-label="Buscar">
+      </div>
+      <div class="tabs" id="tabs" style="margin-bottom:10px"></div>
+      <div class="tbl">
+        <table>
+          <thead><tr>
+            <th data-k="fornecedor">Fornecedor</th>
+            <th data-k="nf">Nota · parcela</th>
+            <th data-k="vencimento" aria-sort="ascending">Vencimento</th>
+            <th data-k="valor" class="r">Valor</th>
+            <th data-k="situacao">Situação</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" hidden>
+        <h4>Nenhuma nota lançada ainda</h4>
+        <p>Arraste um XML de nota fiscal para a área acima. Para uma demonstração, gere notas fictícias.</p>
+        <button class="btn primary" id="b-exemplos" type="button">Gerar notas de exemplo</button>
+      </div>
+      <div class="empty" id="nada" hidden><p>Nenhuma parcela neste filtro.</p></div>
+    </div>
+
+    <aside class="card">
+      <div class="card-head"><h3>Atividade</h3><span class="eyebrow" id="pend"></span></div>
+      <div class="feed" id="feed"></div>
+    </aside>
+  </section>
+
+  <p class="foot">Os dados ficam na planilha <code id="f-plan">contas_a_pagar.xlsx</code>, na pasta do projeto. A situação é calculada com a data de hoje. Feche a planilha no Excel enquanto usa o painel.</p>
+</main>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dataBR = (iso) => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '—';
+const COR = { ok: 'var(--ok)', aviso: 'var(--warn)', erro: 'var(--bad)' };
+const SITS = ['Todas', 'Vencida', 'Vence em 7 dias', 'A vencer', 'Verificar', 'Paga'];
+const ORDEM_SIT = { 'Vencida': 0, 'Vence em 7 dias': 1, 'Verificar': 2, 'A vencer': 3, 'Paga': 4 };
+
+const st = { linhas: [], filtro: 'Todas', q: '', sort: 'vencimento', dir: 1, vistos: null, novos: new Set() };
+
+function toast(texto, nivel = 'ok') {
+  const t = el('div', 'toast'); const d = el('span', 'dot'); d.style.background = COR[nivel]; t.append(d, el('span', null, texto));
+  $('toasts').append(t); setTimeout(() => t.remove(), 5200);
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok || j.ok === false) throw new Error(j.erro || `Erro ${r.status}`);
+  return j;
+}
+
+/* ---------- carregar ---------- */
+async function carregar() {
+  try {
+    const d = await api('/api/dados');
+    $('banner').hidden = true;
+    $('live').classList.remove('off'); $('live-t').textContent = 'Vigiando a pasta entrada';
+    const chaves = new Set(d.linhas.map((l) => l.chave + '|' + l.parcela));
+    if (st.vistos) for (const k of chaves) if (!st.vistos.has(k)) st.novos.add(k);
+    st.vistos = chaves;
+    st.linhas = d.linhas;
+    $('f-plan').textContent = d.planilha;
+    $('pend').textContent = d.pendentes ? `${d.pendentes} na fila` : '';
+    desenharTotais(); desenharTabs(); desenharTabela(); desenharFeed(d.eventos);
+    setTimeout(() => st.novos.clear(), 2500);
+  } catch (e) {
+    if (/aberta/.test(e.message)) { $('banner').hidden = false; $('banner').textContent = e.message; }
+    else { $('live').classList.add('off'); $('live-t').textContent = 'Painel desligado. Rode painel.py de novo'; }
+  }
+}
+
+function desenharTotais() {
+  const soma = (f) => st.linhas.filter(f).reduce((s, l) => s + l.valor, 0);
+  const qt = (f) => st.linhas.filter(f).length;
+  const aberto = (l) => l.situacao !== 'Paga';
+  $('t-aberto').textContent = brl(soma(aberto));
+  const nf = new Set(st.linhas.filter(aberto).map((l) => l.chave)).size;
+  $('t-aberto-s').textContent = st.linhas.length ? `${qt(aberto)} parcelas de ${nf} notas` : 'Nenhuma nota lançada';
+  for (const s of ['Vencida', 'Vence em 7 dias', 'A vencer', 'Paga']) {
+    const f = (l) => l.situacao === s;
+    $('t-' + s).textContent = brl(soma(f));
+    const n = qt(f); $('t-' + s + '-s').textContent = n === 1 ? '1 parcela' : `${n} parcelas`;
+  }
+}
+
+function desenharTabs() {
+  const box = $('tabs'); box.replaceChildren();
+  for (const s of SITS) {
+    const n = s === 'Todas' ? st.linhas.length : st.linhas.filter((l) => l.situacao === s).length;
+    if (s !== 'Todas' && s !== st.filtro && !n) continue;
+    const b = el('button', 'tab', s); b.type = 'button'; b.setAttribute('aria-pressed', st.filtro === s); b.append(el('b', null, n));
+    b.addEventListener('click', () => { st.filtro = s; desenharTabs(); desenharTabela(); });
+    box.append(b);
+  }
+}
+
+function prazo(l) {
+  if (l.situacao === 'Paga') return 'paga';
+  if (l.dias == null) return 'sem vencimento na nota';
+  if (l.dias < 0) return `venceu há ${-l.dias} ${-l.dias === 1 ? 'dia' : 'dias'}`;
+  if (l.dias === 0) return 'vence hoje';
+  return `em ${l.dias} ${l.dias === 1 ? 'dia' : 'dias'}`;
+}
+
+function desenharTabela() {
+  const q = st.q.trim().toLowerCase();
+  let rows = st.linhas.filter((l) => (st.filtro === 'Todas' || l.situacao === st.filtro) && (!q || [l.fornecedor, l.cnpj, l.nf].join(' ').toLowerCase().includes(q)));
+  const k = st.sort, dir = st.dir;
+  rows.sort((a, b) => {
+    let x = a[k], y = b[k];
+    if (k === 'situacao') { x = ORDEM_SIT[x]; y = ORDEM_SIT[y]; }
+    if (k === 'vencimento') { x = x || '9999'; y = y || '9999'; }
+    if (k === 'nf') { x = +x; y = +y; }
+    return (x > y ? 1 : x < y ? -1 : 0) * dir;
+  });
+  const tb = $('tb'); tb.replaceChildren();
+  for (const l of rows) {
+    const tr = el('tr', (l.situacao === 'Paga' ? 'paid ' : '') + (st.novos.has(l.chave + '|' + l.parcela) ? 'new' : ''));
+    const c1 = el('td'); c1.append(el('div', 'forn', l.fornecedor), el('div', 'sub', l.cnpj || ''));
+    const c2 = el('td'); c2.append(el('div', 'num', 'NF ' + l.nf), el('div', 'sub', 'parcela ' + l.parcela));
+    const c3 = el('td'); c3.append(el('div', 'num', dataBR(l.vencimento)), el('div', 'sub', prazo(l)));
+    const c4 = el('td', 'r num', brl(l.valor)); c4.style.fontWeight = '600';
+    const PILL = { 'Vencida': 'Vencida', 'Vence em 7 dias': 'Vence', 'A vencer': 'Avencer', 'Verificar': 'Verificar', 'Paga': 'Paga' };
+    const c5 = el('td'); c5.append(el('span', 'pill ' + PILL[l.situacao], l.situacao));
+    const c6 = el('td', 'r');
+    const pago = l.situacao === 'Paga';
+    const b = el('button', 'pay' + (pago ? ' done' : ''), pago ? 'Desfazer' : '✓ Marcar paga'); b.type = 'button';
+    b.title = pago ? 'Voltar para em aberto' : 'Marcar esta parcela como paga';
+    b.addEventListener('click', () => pagar(l, !pago, b));
+    c6.append(b);
+    tr.append(c1, c2, c3, c4, c5, c6); tb.append(tr);
+  }
+  $('empty').hidden = st.linhas.length > 0;
+  $('nada').hidden = !(st.linhas.length > 0 && rows.length === 0);
+  document.querySelector('table').hidden = st.linhas.length === 0;
+  document.querySelectorAll('th[data-k]').forEach((th) => th.setAttribute('aria-sort', th.dataset.k === st.sort ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'));
+}
+
+function desenharFeed(evs) {
+  const f = $('feed'); f.replaceChildren();
+  if (!evs.length) { f.append(el('p', 'sub', 'Nada processado ainda.')); return; }
+  for (const e of evs.slice(0, 60)) {
+    const r = el('div', 'ev'); const d = el('span', 'dot'); d.style.background = COR[e.nivel] || COR.ok;
+    r.append(d, el('span', 'h', e.hora), el('span', 't', e.texto)); f.append(r);
+  }
+}
+
+/* ---------- ações ---------- */
+async function pagar(l, pago, btn) {
+  btn.disabled = true;
+  try { await api('/api/pagar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ linha: l.linha, pago }) });
+    toast(pago ? `NF ${l.nf} parcela ${l.parcela} marcada como paga` : `NF ${l.nf} parcela ${l.parcela} voltou para em aberto`);
+  } catch (e) { toast(e.message, 'erro'); }
+  await carregar();
+}
+
+async function enviar(files) {
+  files = [...files]; if (!files.length) return;
+  const drop = $('drop'), prog = $('prog');
+  $('drop-t').textContent = `Enviando ${files.length} ${files.length === 1 ? 'arquivo' : 'arquivos'}…`;
+  let i = 0;
+  try {
+    for (const f of files) {
+      await api('/api/enviar', { method: 'POST', headers: { 'X-Arquivo': encodeURIComponent(f.name) }, body: f });
+      prog.style.width = (++i / files.length * 80) + '%';
+    }
+    const r = await api('/api/processar', { method: 'POST' });
+    prog.style.width = '100%';
+    for (const e of r.eventos) toast(e.texto, e.nivel);
+    if (!r.eventos.length) toast('Nenhuma parcela nova.', 'aviso');
+  } catch (e) { toast(e.message, 'erro'); }
+  setTimeout(() => { prog.style.width = '0'; }, 600);
+  $('drop-t').textContent = 'Arraste o XML da nota aqui';
+  $('file').value = '';
+  await carregar();
+}
+
+const drop = $('drop');
+['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => enviar(e.dataTransfer.files));
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => { e.preventDefault(); if (!drop.contains(e.target)) enviar(e.dataTransfer.files); });
+$('file').addEventListener('change', (e) => enviar(e.target.files));
+
+$('q').addEventListener('input', (e) => { st.q = e.target.value; desenharTabela(); });
+document.querySelectorAll('th[data-k]').forEach((th) => th.addEventListener('click', () => {
+  if (st.sort === th.dataset.k) st.dir *= -1; else { st.sort = th.dataset.k; st.dir = th.dataset.k === 'valor' ? -1 : 1; }
+  desenharTabela();
+}));
+document.querySelectorAll('.tot[data-f]').forEach((b) => b.addEventListener('click', () => { st.filtro = st.filtro === b.dataset.f ? 'Todas' : b.dataset.f; desenharTabs(); desenharTabela(); }));
+$('b-planilha').addEventListener('click', () => api('/api/abrir-planilha', { method: 'POST' }).then(() => toast('Abrindo a planilha no Excel. Feche-a antes de lançar novas notas.', 'aviso')).catch((e) => toast(e.message, 'erro')));
+$('b-pasta').addEventListener('click', () => api('/api/abrir-pasta', { method: 'POST' }).catch((e) => toast(e.message, 'erro')));
+$('b-exemplos').addEventListener('click', async () => {
+  try { await api('/api/exemplos', { method: 'POST' }); const r = await api('/api/processar', { method: 'POST' }); toast(`${r.lancadas} parcelas de exemplo lançadas`); } catch (e) { toast(e.message, 'erro'); }
+  carregar();
+});
+
+carregar();
+setInterval(carregar, 4000);
+</script>
+</body>
+</html>

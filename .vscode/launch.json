@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Gerar notas de exemplo",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/gerar_notas_exemplo.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "2. Processar notas da pasta entrada",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao_nf.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "3. Vigiar pasta (fica rodando)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/automacao_nf.py",
+      "args": ["--vigiar"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    }
+  ]
+}

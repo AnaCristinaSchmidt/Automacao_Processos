@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+processadas/
+erros/
+processamento.log
+contas_a_pagar.xlsx
+entrada/*
+!entrada/.gitkeep
+*.xlsx
+.env
+.env.*

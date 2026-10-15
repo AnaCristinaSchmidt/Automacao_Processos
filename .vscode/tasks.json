@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Preparar ambiente (criar .venv e instalar openpyxl)",
+      "type": "shell",
+      "windows": {
+        "command": "py -3 -m venv .venv; .\\.venv\\Scripts\\python.exe -m pip install --upgrade pip; .\\.venv\\Scripts\\python.exe -m pip install -r requirements.txt; .\\.venv\\Scripts\\python.exe -c \"import openpyxl, sys; print('OK: Python', sys.version.split()[0], '| openpyxl', openpyxl.__version__)\""
+      },
+      "command": "python3 -m venv .venv && ./.venv/bin/python -m pip install -r requirements.txt",
+      "problemMatcher": []
+    },
+    {
+      "label": "Limpar teste (zera planilha, log e pastas)",
+      "type": "shell",
+      "windows": {
+        "command": "Remove-Item -ErrorAction SilentlyContinue contas_a_pagar.xlsx, processamento.log; Remove-Item -Recurse -ErrorAction SilentlyContinue processadas, erros; Get-ChildItem entrada -Exclude .gitkeep | Remove-Item -ErrorAction SilentlyContinue; Write-Host 'Teste limpo.'"
+      },
+      "command": "rm -rf contas_a_pagar.xlsx processamento.log processadas erros && find entrada -type f ! -name .gitkeep -delete",
+      "problemMatcher": []
+    }
+  ]
+}
